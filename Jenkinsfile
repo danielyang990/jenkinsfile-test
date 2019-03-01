@@ -14,7 +14,7 @@ def get_choices(values) {
   for (c in choices) {
     result += "${c}\n"
   }
-  return result[0..-3]  // 最后个换行不要
+  return result[0..-2]  // 最后个换行不要
 }
 
 def TEMPLATE_NOS = get_choices("${TEMPLATE_NOS}")
@@ -45,6 +45,16 @@ pipeline {
               echo "成功刷新了流水线配置, 退出流水线"
               return
             }            
+          }
+
+          echo "开始 checkout 代码"
+        }
+      }
+
+      stage('Build') {
+        steps {
+          script {
+            echo "构建代码"
           }
         }
       }
