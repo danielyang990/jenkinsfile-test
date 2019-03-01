@@ -40,6 +40,7 @@ pipeline {
       stage('Checkout') {
         steps {
           script {
+            echo "params: ${params}"
             if (params.REFRESH) {
               echo "成功刷新了流水线配置, 退出流水线"
               return
