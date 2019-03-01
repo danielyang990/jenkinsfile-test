@@ -17,7 +17,7 @@ def get_choices(values) {
   return result[0..-3]  // 最后个换行不要
 }
 
-def ENVIRONMENTS = get_choices("${ENVIRONMENTS}")
+def TEMPLATE_NOS = get_choices("${TEMPLATE_NOS}")
 
 pipeline {
     agent any
