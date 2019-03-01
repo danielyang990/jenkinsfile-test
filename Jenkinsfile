@@ -44,6 +44,12 @@ pipeline {
                           userRemoteConfigs: [[url: "${CODE_REPOSITORY}"]]
                         ])
             }
+            echo "scmVars: ${scmVars};"
+            sh """
+            git status
+            git log
+            env
+            """
 
             // 提取 git 信息
             GIT_COMMIT = "${scmVars.GIT_COMMIT}"
