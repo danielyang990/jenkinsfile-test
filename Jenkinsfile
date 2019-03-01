@@ -1,9 +1,8 @@
 // https://jenkins.io/doc/book/pipeline/syntax/
 
-def BRANCH_NAMES = "develop\nmaster"
 def GIT_COMMIT
 def GIT_BRANCH
-def ENVIRONMENT  // 要部署到哪个环境
+def ENVIRONMENT = 'int'  // 如果外面没传递进来值，默认只部署到 int 环境
 
 pipeline {
     agent any
@@ -17,7 +16,7 @@ pipeline {
 
     parameters {
         booleanParam(name: 'DEBUG', defaultValue: true, description: '调试模式: 会显示更详细的日志信息')
-        choice(name: 'GIT_BRANCH', choices: BRANCH_NAMES, description: '构建的分支名称')
+        gitParameter branchFilter: 'origin/(.*)', defaultValue: 'develop', name: 'BRANCH', type: 'PT_BRANCH'
     }
 
     environment {
@@ -30,19 +29,19 @@ pipeline {
         steps {
           script {
             echo "params: ${params}"
-            GIT_BRANCH = params.BRANCH_NAME
-            ENVIRONMENT = params.ENVIRONMENT
+            // 这两个参数，都是由外面传进来的，不是在 jenkinsfile 中定义
+            if (params.ENVIRONMENT != "") {
+              ENVIRONMENT = params.ENVIRONMENT
+            }
 
             echo "开始 checkout 代码"
             def scmVars
             retry(2) {
-                // scmVars = git branch: "${GIT_BRANCH}", url: "${env.CODE_REPOSITORY}"
-                scmVars = checkout scm
+              scmVars = git branch: "${params.BRANCH}", url: "${CODE_REPOSITORY}"
+                // scmVars = checkout scm
             }
 
             // 提取 git 信息
-            env.GIT_COMMIT = scmVars.GIT_COMMIT
-            env.GIT_BRANCH = scmVars.GIT_BRANCH
             GIT_COMMIT = "${scmVars.GIT_COMMIT}"
             GIT_BRANCH = "${scmVars.GIT_BRANCH}"
 
