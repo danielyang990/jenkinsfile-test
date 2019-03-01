@@ -1,7 +1,7 @@
 // https://jenkins.io/doc/book/pipeline/syntax/
 
 def GIT_COMMIT
-def GIT_BRANCH = 'develop'
+def GIT_BRANCH
 def ENVIRONMENT = 'int'  // 如果外面没传递进来值，默认只部署到 int 环境
 
 pipeline {
@@ -16,6 +16,7 @@ pipeline {
 
     parameters {
         booleanParam(name: 'DEBUG', defaultValue: true, description: '调试模式: 会显示更详细的日志信息')
+        gitParameter branchFilter: 'origin/(.*)', defaultValue: 'develop', name: 'BRANCH', type: 'PT_BRANCH'
     }
 
     environment {
@@ -28,18 +29,20 @@ pipeline {
         steps {
           script {
             echo "params: ${params}"
-            // 这两个参数，都是由外面传进来的，不是在 jenkinsfile 中定义
-            if (params.GIT_COMMIT != "") {
-              GIT_BRANCH = params.GIT_BRANCH
-            }
             if (params.ENVIRONMENT != "") {
               ENVIRONMENT = params.ENVIRONMENT
             }
 
-            echo "开始 checkout 代码"
             def scmVars
             retry(2) {
-                scmVars = checkout scm
+                scmVars = checkout([$class: 'GitSCM',
+                          branches: [[name: "${params.BRANCH}"]],
+                          doGenerateSubmoduleConfigurations: false,
+                          extensions: [],
+                          gitTool: 'Default',
+                          submoduleCfg: [],
+                          userRemoteConfigs: [[url: "${CODE_REPOSITORY}"]]
+                        ])
             }
 
             // 提取 git 信息
