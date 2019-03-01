@@ -1,23 +1,9 @@
 // https://jenkins.io/doc/book/pipeline/syntax/
 
-def get_choices(values) {
-  if (values == "") {
-    return ""
-  }
-
-  def result = ''
-  def choices = values.split(',')
-  if (choices.length == 0) {
-    return ""
-  }
-
-  for (c in choices) {
-    result += "${c}\n"
-  }
-  return result[0..-2]  // 最后个换行不要
-}
-
-def TEMPLATE_NOS = get_choices("${TEMPLATE_NOS}")
+def BRANCH_NAMES = "develop\nmaster"
+def GIT_COMMIT
+def GIT_BRANCH
+def ENVIRONMENT  // 要部署到哪个环境
 
 pipeline {
     agent any
@@ -31,8 +17,11 @@ pipeline {
 
     parameters {
         booleanParam(name: 'DEBUG', defaultValue: true, description: '调试模式: 会显示更详细的日志信息')
-        booleanParam(name: 'REFRESH', defaultValue: false, description: '刷新: 当更改了全局变量的值, 需要先勾选此项进行配置的刷新')
-        choice(name: 'TEMPLATE_NO', choices: TEMPLATE_NOS, description: '序列号: build 用到的序列号, 不同环境会不同, 只有前端用到此参数')
+        choice(name: 'GIT_BRANCH', choices: BRANCH_NAMES, description: '构建的分支名称')
+    }
+
+    environment {
+        CODE_REPOSITORY = "https://github.com/danielyang990/jenkinsfile-test.git"
     }
 
     stages {
@@ -41,13 +30,24 @@ pipeline {
         steps {
           script {
             echo "params: ${params}"
-            if (params.REFRESH) {
-              echo "成功刷新了流水线配置, 退出流水线"
-              return
-            }            
-          }
+            GIT_BRANCH = params.BRANCH_NAME
+            ENVIRONMENT = params.ENVIRONMENT
 
-          echo "开始 checkout 代码"
+            echo "开始 checkout 代码"
+            def scmVars
+            retry(2) {
+                // scmVars = git branch: "${GIT_BRANCH}", url: "${env.CODE_REPOSITORY}"
+                scmVars = checkout scm
+            }
+
+            // 提取 git 信息
+            env.GIT_COMMIT = scmVars.GIT_COMMIT
+            env.GIT_BRANCH = scmVars.GIT_BRANCH
+            GIT_COMMIT = "${scmVars.GIT_COMMIT}"
+            GIT_BRANCH = "${scmVars.GIT_BRANCH}"
+
+            echo "GIT_BRANCH: ${GIT_BRANCH}; GIT_COMMIT: ${GIT_COMMIT}; ENVIRONMENT: ${ENVIRONMENT}"
+          }
         }
       }
 
