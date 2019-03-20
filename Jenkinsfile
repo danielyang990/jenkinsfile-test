@@ -58,6 +58,13 @@ pipeline {
         steps {
           script {
             echo "构建代码"
+            build job: '../docker-prod-config', parameters: [
+              [$class: 'StringParameterValue', name: 'CHART', value: 'admin-server'],
+              [$class: 'StringParameterValue', name: 'COMPONENT', value: 'backend'],
+              [$class: 'StringParameterValue', name: 'IMAGE_TAG', value: GIT_COMMIT],
+              [$class: 'StringParameterValue', name: 'ENVIRONMENT', value: 'staging'],
+              [$class: 'BooleanParameterValue', name: 'DEBUG', value: true],
+            ], wait: false              
           }
         }
       }
